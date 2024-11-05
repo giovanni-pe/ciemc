@@ -1,0 +1,96 @@
+name: Deploy Application
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  # Paso de inicio: clonar el proyecto, configurar Node.js e instalar dependencias
+  inicio:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clonar el proyecto
+        uses: actions/checkout@v2
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '14'
+
+      - name: Instalar dependencias
+        run: npm install
+
+  # Paso de pruebas: ejecutar pruebas y verificar cobertura
+  pruebas:
+    runs-on: ubuntu-latest
+    needs: inicio
+    steps:
+      - name: Clonar el proyecto
+        uses: actions/checkout@v2
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '14'
+
+      - name: Instalar dependencias
+        run: npm install
+
+      - name: Ejecutar pruebas
+        run: |
+          echo "Ejecutando pruebas..."
+          npx jest --coverage > coverage-summary.txt
+          
+      - name: Verificar cobertura mínima
+        id: coverage-check
+        run: |
+          coverage=$(grep -oP '(?<=statements.*total\s)\d+' coverage-summary.txt)
+          echo "Cobertura: ${coverage}%"
+          if [ $coverage -lt 85 ]; then
+            echo "La cobertura es insuficiente (${coverage}%), debe ser al menos del 85%."
+            exit 1
+          fi
+        shell: bash
+
+  # Paso de plan de despliegue: copiar el archivo .env
+  plan_de_despliegue:
+    runs-on: ubuntu-latest
+    needs: pruebas
+    steps:
+      - name: Clonar el proyecto
+        uses: actions/checkout@v2
+
+      - name: Copiar archivo .env
+        run: cp variables/.env ./.env
+
+  # Paso de deploy: construir la imagen Docker y hacer push a ECR
+  deploy:
+    runs-on: ubuntu-latest
+    needs: plan_de_despliegue
+    steps:
+      - name: Configurar AWS
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-2
+
+      - name: Autenticación en Amazon ECR
+        id: login-ecr
+        run: |
+          aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin 216289965235.dkr.ecr.us-east-2.amazonaws.com
+
+      - name: Instalar Docker
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y docker.io
+
+      - name: Construir imagen Docker
+        run: docker build -t deployapp:latest .
+
+      - name: Etiquetar imagen para ECR
+        run: docker tag deployapp:latest 216289965235.dkr.ecr.us-east-2.amazonaws.com/deployapp:latest
+
+      - name: Publicar imagen en ECR
+        run: docker push 216289965235.dkr.ecr.us-east-2.amazonaws.com/deployapp:latest

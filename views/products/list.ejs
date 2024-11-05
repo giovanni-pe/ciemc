@@ -1,0 +1,29 @@
+<%- include('../layout-header.ejs') %>
+<h1>Lista de Autos</h1>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Marca</th>
+            <th>Modelo</th>
+            <th>Stock</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        <% cars.forEach(function(car) { %>
+            <tr>
+                <td><%= car.marca %></td>
+                <td><%= car.modelo %></td>
+                <td><%= car.stock %></td>
+                <td>
+                    <a href="/products/<%= car._id %>" class="btn btn-info btn-sm">Ver</a>
+                    <a href="/products/<%= car._id %>/edit" class="btn btn-warning btn-sm">Editar</a>
+                    <form action="/products/<%= car._id %>?_method=DELETE" method="POST" style="display:inline;">
+                        <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
+                    </form>
+                </td>
+            </tr>
+        <% }) %>
+    </tbody>
+</table>
+<%- include('../layout-footer.ejs') %>

@@ -1,0 +1,9 @@
+<%- include('../layout-header.ejs') %>
+<h1><%= car.marca %> <%= car.modelo %></h1>
+<p><strong>Stock:</strong> <%= car.stock %></p>
+<a href="/products" class="btn btn-secondary">Volver</a>
+<a href="/products/<%= car._id %>/edit" class="btn btn-warning">Editar</a>
+<form action="/products/<%= car._id %>?_method=DELETE" method="POST" style="display:inline;">
+    <button type="submit" class="btn btn-danger">Eliminar</button>
+</form>
+<%- include('../layout-footer.ejs') %>
