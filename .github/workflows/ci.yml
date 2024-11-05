@@ -8,7 +8,7 @@ on:
 jobs:
   # Paso de inicio: clonar el proyecto, configurar Node.js e instalar dependencias
   inicio:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted]
     steps:
       - name: Clonar el proyecto
         uses: actions/checkout@v2
@@ -23,7 +23,7 @@ jobs:
 
   # Paso de pruebas: ejecutar pruebas y verificar cobertura
   pruebas:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted]
     needs: inicio
     steps:
       - name: Clonar el proyecto
@@ -55,7 +55,7 @@ jobs:
 
   # Paso de plan de despliegue: copiar el archivo .env
   plan_de_despliegue:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted]
     needs: pruebas
     steps:
       - name: Clonar el proyecto
@@ -66,7 +66,7 @@ jobs:
 
   # Paso de deploy: construir la imagen Docker y hacer push a ECR
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted]
     needs: plan_de_despliegue
     steps:
       - name: Configurar AWS
@@ -81,7 +81,7 @@ jobs:
         run: |
           aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin 216289965235.dkr.ecr.us-east-2.amazonaws.com
 
-      - name: Instalar Docker
+      - name: Instalar Docker (si es necesario)
         run: |
           sudo apt-get update
           sudo apt-get install -y docker.io
